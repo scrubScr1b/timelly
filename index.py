@@ -2,7 +2,7 @@ import streamlit as st
 
 pages = {
     "Market": [
-        st.Page("pages/market.py", title="Dashboard", icon="📊"),
+        st.Page("pages/dashboard.py", title="Dashboard", icon="📊"),
         st.Page("pages/heatmap.py", title="Heat Map", icon="🔥"),
     ],
     "Forecasting": [
