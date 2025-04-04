@@ -8,7 +8,7 @@ df = pd.read_excel("data/df_mz.xlsx")
 
 # Pastikan kolom Date dalam format datetime
 df["Date"] = pd.to_datetime(df["Date"])
-df["Year"] = df["Date"].dt.year  # Ambil tahun
+df["Year"] = df["Date"].dt.year  # Ambil ta`hun
 df["Month"] = df["Date"].dt.strftime("%b")  # Ambil bulan dalam format singkat (Jan, Feb, dst.)
 
 # Sidebar untuk filter Tahun
