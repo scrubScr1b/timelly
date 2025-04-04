@@ -1,7 +1,12 @@
 import pandas as pd
 import streamlit as st
+import altair as alt
+
+st.set_page_config(layout="wide")
 
 st.title("Market Dashboard")
+
+
 
 # Load data
 df = pd.read_excel("data/df_mz.xlsx")
@@ -23,6 +28,21 @@ df_filtered = df[(df["Year"] == selected_year) & (df["Brand"].isin(selected_bran
 # Menampilkan Data yang sudah difilter
 with st.expander("Data Preview"):
     st.dataframe(df_filtered)
+
+# KPI Section
+total_sales = df_filtered["Total_Sales"].sum()
+total_qty = df_filtered["Qty"].sum()
+unique_customers = df_filtered["Customers"].nunique()
+
+kpi1, kpi2, kpi3 = st.columns(3)
+
+with kpi1:
+    st.metric("Total Sales All Time", f"Rp {total_sales:,.0f}")
+
+with kpi2:
+    st.metric("Total Quantity All Time", f"{total_qty:,.0f}")
+
+
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -80,3 +100,117 @@ with col4:
 
     pivot_month = pivot_month.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
     st.dataframe(pivot_month.style.format("{:,.0f}"))
+
+# =====================
+# 📊 BAR CHART SECTION
+# =====================
+
+st.markdown("---")  # Garis pemisah visual
+st.subheader("📊 Sales Visualizations")
+
+# Dropdown selector untuk jenis data
+chart_option = st.selectbox(
+    "Pilih jenis data untuk visualisasi:",
+    ["Total Sales", "Quantity", "Total Sales & Quantity"]
+)
+
+
+# 1. Bar Chart - Top 10 Customers
+st.markdown("**Top 10 Customers**")
+top_customers_df = df_filtered.groupby("Customers")[["Qty", "Total_Sales"]].sum().sort_values(
+    by="Total_Sales", ascending=False
+).head(10).reset_index()
+
+if chart_option == "Total Sales":
+    chart_top = alt.Chart(top_customers_df).mark_bar(color="#1f77b4").encode(
+        x=alt.X("Total_Sales:Q", title="Total Sales"),
+        y=alt.Y("Customers:N", sort='-x'),
+        tooltip=["Customers", "Total_Sales"]
+    )
+elif chart_option == "Quantity":
+    chart_top = alt.Chart(top_customers_df).mark_bar(color="#ff7f0e").encode(
+        x=alt.X("Qty:Q", title="Quantity"),
+        y=alt.Y("Customers:N", sort='-x'),
+        tooltip=["Customers", "Qty"]
+    )
+else:
+    bar = alt.Chart(top_customers_df).mark_bar(color="#1f77b4").encode(
+        x=alt.X("Total_Sales:Q"),
+        y=alt.Y("Customers:N", sort='-x'),
+        tooltip=["Customers", "Total_Sales"]
+    )
+    line = alt.Chart(top_customers_df).mark_line(color="#ff7f0e", point=True).encode(
+        x="Qty:Q",
+        y=alt.Y("Customers:N", sort='-x'),
+        tooltip=["Customers", "Qty"]
+    )
+    chart_top = bar + line
+
+st.altair_chart(chart_top.properties(height=300), use_container_width=True)
+
+# 2. Bar Chart - Sales per Month
+st.markdown("**Sales per Month**")
+sales_month_df = df_filtered.groupby("Month")[["Qty", "Total_Sales"]].sum().reindex(
+    ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+).reset_index()
+
+if chart_option == "Total Sales":
+    chart_month = alt.Chart(sales_month_df).mark_bar(color="#1f77b4").encode(
+        x=alt.X("Month:N", sort=list(sales_month_df["Month"]), axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Total_Sales:Q", title="Total Sales"),
+        tooltip=["Month", "Total_Sales"]
+    )
+elif chart_option == "Quantity":
+    chart_month = alt.Chart(sales_month_df).mark_bar(color="#ff7f0e").encode(
+        x=alt.X("Month:N", sort=list(sales_month_df["Month"]), axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Qty:Q", title="Quantity"),
+        tooltip=["Month", "Qty"]
+    )
+else:
+    bar = alt.Chart(sales_month_df).mark_bar(color="#1f77b4").encode(
+        x=alt.X("Month:N", sort=list(sales_month_df["Month"]), axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Total_Sales:Q"),
+        tooltip=["Month", "Total_Sales"]
+    )
+    line = alt.Chart(sales_month_df).mark_line(color="#ff7f0e", point=True).encode(
+        x=alt.X("Month:N", sort=list(sales_month_df["Month"]), axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Qty:Q"),
+        tooltip=["Month", "Qty"]
+    )
+    chart_month = bar + line
+
+st.altair_chart(chart_month.properties(height=300), use_container_width=True)
+
+
+# 3. Bar Chart - Sales per Year
+st.markdown("**Sales per Year**")
+sales_year_df = df.groupby("Year")[["Qty", "Total_Sales"]].sum().reset_index()
+
+if chart_option == "Total Sales":
+    chart_year = alt.Chart(sales_year_df).mark_bar(color="#1f77b4").encode(
+        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Total_Sales:Q", title="Total Sales"),
+        tooltip=["Year", "Total_Sales"]
+    )
+elif chart_option == "Quantity":
+    chart_year = alt.Chart(sales_year_df).mark_bar(color="#ff7f0e").encode(
+        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Qty:Q", title="Quantity"),
+        tooltip=["Year", "Qty"]
+    )
+else:
+    bar = alt.Chart(sales_year_df).mark_bar(color="#1f77b4").encode(
+        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Total_Sales:Q"),
+        tooltip=["Year", "Total_Sales"]
+    )
+    line = alt.Chart(sales_year_df).mark_line(color="#ff7f0e", point=True).encode(
+        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("Qty:Q"),
+        tooltip=["Year", "Qty"]
+    )
+    chart_year = bar + line
+
+st.altair_chart(chart_year.properties(height=300), use_container_width=True)
+
