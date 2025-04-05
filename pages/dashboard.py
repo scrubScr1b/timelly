@@ -6,24 +6,27 @@ st.set_page_config(layout="wide")
 
 st.title("Market Dashboard")
 
-
-
 # Load data
 df = pd.read_excel("data/df_mz.xlsx")
 
 # Pastikan kolom Date dalam format datetime
 df["Date"] = pd.to_datetime(df["Date"])
-df["Year"] = df["Date"].dt.year  # Ambil ta`hun
-df["Month"] = df["Date"].dt.strftime("%b")  # Ambil bulan dalam format singkat (Jan, Feb, dst.)
+df["Year"] = df["Date"].dt.year
 
-# Sidebar untuk filter Tahun
-selected_year = st.sidebar.selectbox("Pilih Tahun", sorted(df["Year"].unique(), reverse=True))
+df["Month"] = df["Date"].dt.strftime("%b")  # Format singkat (Jan, Feb, dst.)
+all_months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-# Sidebar untuk filter Brand (bisa memilih lebih dari satu)
-selected_brands = st.sidebar.multiselect("Pilih Brand", df["Brand"].unique(), default=df["Brand"].unique())
+# Sidebar untuk filter
+selected_years = st.sidebar.multiselect("Pilih Tahun", sorted(df["Year"].unique(), reverse=True), default=sorted(df["Year"].unique(), reverse=True))
+selected_months = st.sidebar.multiselect("Pilih Bulan", all_months, default=all_months)
+selected_brands = st.sidebar.multiselect("Pilih Brand", sorted(df["Brand"].unique()), default=sorted(df["Brand"].unique()))
 
 # Filter data berdasarkan pilihan user
-df_filtered = df[(df["Year"] == selected_year) & (df["Brand"].isin(selected_brands))]
+df_filtered = df[
+    (df["Year"].isin(selected_years)) &
+    (df["Month"].isin(selected_months)) &
+    (df["Brand"].isin(selected_brands))
+]
 
 # Menampilkan Data yang sudah difilter
 with st.expander("Data Preview"):
@@ -41,8 +44,6 @@ with kpi1:
 
 with kpi2:
     st.metric("Total Quantity All Time", f"{total_qty:,.0f}")
-
-
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -70,7 +71,7 @@ with col2:
         aggfunc="sum",
     ).sort_values(by="Total_Sales", ascending=False)
 
-    pivot = pivot.rename(columns={"Qty": "Quantity", "Total Sales": "Total Sales"})
+    pivot = pivot.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
     st.dataframe(pivot.style.format("{:,.0f}"))
 
 # Sales per Year
@@ -78,11 +79,11 @@ with col3:
     st.subheader("Sales per Year")
 
     pivot_year = pd.pivot_table(
-        df,
+        df_filtered,
         index="Year",
         values=["Qty", "Total_Sales"],
         aggfunc="sum"
-    ).sort_index(ascending=True)  # Urutkan tahun dari yang terlama ke terbaru
+    ).sort_index(ascending=True)
 
     pivot_year = pivot_year.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
     st.dataframe(pivot_year.style.format("{:,.0f}"))
@@ -96,7 +97,7 @@ with col4:
         index="Month",
         values=["Qty", "Total_Sales"],
         aggfunc="sum"
-    ).reindex(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"])
+    ).reindex(all_months)
 
     pivot_month = pivot_month.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
     st.dataframe(pivot_month.style.format("{:,.0f}"))
@@ -105,7 +106,7 @@ with col4:
 # 📊 BAR CHART SECTION
 # =====================
 
-st.markdown("---")  # Garis pemisah visual
+st.markdown("---")
 st.subheader("📊 Sales Visualizations")
 
 # Dropdown selector untuk jenis data
@@ -113,7 +114,6 @@ chart_option = st.selectbox(
     "Pilih jenis data untuk visualisasi:",
     ["Total Sales", "Quantity", "Total Sales & Quantity"]
 )
-
 
 # 1. Bar Chart - Top 10 Customers
 st.markdown("**Top 10 Customers**")
@@ -151,8 +151,7 @@ st.altair_chart(chart_top.properties(height=300), use_container_width=True)
 # 2. Bar Chart - Sales per Month
 st.markdown("**Sales per Month**")
 sales_month_df = df_filtered.groupby("Month")[["Qty", "Total_Sales"]].sum().reindex(
-    ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    all_months
 ).reset_index()
 
 if chart_option == "Total Sales":
@@ -182,10 +181,9 @@ else:
 
 st.altair_chart(chart_month.properties(height=300), use_container_width=True)
 
-
 # 3. Bar Chart - Sales per Year
 st.markdown("**Sales per Year**")
-sales_year_df = df.groupby("Year")[["Qty", "Total_Sales"]].sum().reset_index()
+sales_year_df = df_filtered.groupby("Year")[["Qty", "Total_Sales"]].sum().reset_index()
 
 if chart_option == "Total Sales":
     chart_year = alt.Chart(sales_year_df).mark_bar(color="#1f77b4").encode(
@@ -213,4 +211,3 @@ else:
     chart_year = bar + line
 
 st.altair_chart(chart_year.properties(height=300), use_container_width=True)
-
