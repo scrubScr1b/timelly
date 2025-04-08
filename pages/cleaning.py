@@ -43,25 +43,6 @@ if cols_to_drop:
     df.drop(columns=cols_to_drop, inplace=True)
     st.warning(f"Kolom {cols_to_drop} telah dihapus.")
 
-# Imputasi Nilai Kosong
-st.subheader("🩹 Imputasi Nilai Kosong")
-null_cols = df.columns[df.isnull().any()]
-for col in null_cols:
-    method = st.selectbox(f"Imputasi untuk '{col}'", ["Biarkan", "Mean", "Median", "Custom"], key=col)
-    if method == "Mean":
-        df[col].fillna(df[col].mean(), inplace=True)
-    elif method == "Median":
-        df[col].fillna(df[col].median(), inplace=True)
-    elif method == "Custom":
-        custom_value = st.number_input(f"Masukkan nilai untuk '{col}'", key=f"{col}_custom")
-        df[col].fillna(custom_value, inplace=True)
-
-# Filter interaktif berdasarkan Qty
-if "Qty" in df.columns:
-    st.subheader("🔎 Filter Data Interaktif")
-    qty_filter = st.slider("Tampilkan data dengan Qty lebih dari:", min_value=0, max_value=int(df["Qty"].max()), value=0)
-    df = df[df["Qty"] > qty_filter]
-
 # Show cleaned data preview
 st.subheader("✅ Cleaned Data Preview")
 st.dataframe(df.head(20), use_container_width=True)
