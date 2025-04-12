@@ -3,80 +3,107 @@ import pandas as pd
 import plotly.express as px
 
 st.set_page_config(page_title="Customer Analysis", layout="wide")
-st.title("📊 Customer Sales Analysis")
+st.title("Customer Sales Analysis")
 
-# Load data
-df = pd.read_excel("data/df_mz.xlsx")
+# Cek apakah data tersedia
+if "data" not in st.session_state:
+    st.warning("Silakan upload file terlebih dahulu di halaman utama.")
+    st.stop()
 
-# Pastikan kolom Date dalam format datetime
-if "Date" in df.columns:
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-    df["Year"] = df["Date"].dt.year
-    df["Month"] = df["Date"].dt.strftime("%b")
+df = st.session_state["data"]
 
-# Sidebar filters
-selected_year = st.sidebar.selectbox("Pilih Tahun", sorted(df["Year"].dropna().unique(), reverse=True))
-selected_month = st.sidebar.selectbox("Pilih Bulan", ["All"] + list(df["Month"].dropna().unique()))
+# Pastikan kolom date dalam format datetime
+if "date" in df.columns:
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df["year"] = df["date"].dt.year
+    df["month"] = df["date"].dt.strftime("%b")
+
+# Urutan bulan
+month_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+# Sidebar filters - multiple select
+selected_years = st.sidebar.multiselect(
+    "Pilih Tahun", sorted(df["year"].dropna().unique(), reverse=True),
+    default=sorted(df["year"].dropna().unique(), reverse=True)
+)
+
+selected_months = st.sidebar.multiselect(
+    "Pilih Bulan", month_order,
+    default=month_order
+)
 
 # Filter data
-df_filtered = df[df["Year"] == selected_year]
-if selected_month != "All":
-    df_filtered = df_filtered[df_filtered["Month"] == selected_month]
+df_filtered = df[df["year"].isin(selected_years) & df["month"].isin(selected_months)]
 
-# **📌 Section 1: Treemap Chart (Sales Contribution per Customer)**
-st.subheader("📊 Treemap - Sales Contribution per Customer")
+# 📊 Section 1: Heatmap - Monthly Sales per Customer
+st.subheader("Heatmap - Monthly Sales per Customer")
 
-# Agregasi data berdasarkan pelanggan
-sales_data = df_filtered.groupby("Customers")["Total_Sales"].sum().reset_index()
+# Pastikan urutan bulan
+df_filtered["month"] = pd.Categorical(df_filtered["month"], categories=month_order, ordered=True)
 
-# Hitung total sales & persentase kontribusi
-total_sales = sales_data["Total_Sales"].sum()
-sales_data["Sales_Percentage"] = (sales_data["Total_Sales"] / total_sales) * 100
+# Pivot table untuk heatmap
+heatmap_data = df_filtered.pivot_table(
+    index="customers", columns="month", values="total_sales", aggfunc="sum", fill_value=0
+)
+heatmap_data = heatmap_data[month_order]  # Urutkan kolom bulan
 
-# Gabungkan nama customer + persen ke dalam satu label
-sales_data["Label"] = (
-    sales_data["Customers"] + "<br>" +
-    sales_data["Sales_Percentage"].round(2).astype(str) + "%"
+# Buat heatmap
+fig_heatmap = px.imshow(
+    heatmap_data,
+    color_continuous_scale="Viridis",
+    labels=dict(x="Month", y="Customer", color="Total Sales"),
+    aspect="auto",
+    title=f"Monthly Sales per Customer ({', '.join(map(str, selected_years))})"
 )
 
-# Buat Treemap
-fig_treemap = px.treemap(
-    sales_data,
-    path=["Label"],
-    values="Total_Sales",
-    title=f"Total Sales Contribution per Customer ({selected_year}, {selected_month if selected_month != 'All' else 'All Months'})",
-    color="Total_Sales",
-    color_continuous_scale="greens",
-    hover_data={"Total_Sales": ":,.0f", "Sales_Percentage": ":.2f"}
+fig_heatmap.update_layout(
+    xaxis_side="top",
+    margin=dict(l=0, r=0, b=0, t=50),
+    coloraxis_colorbar=dict(title="Sales", tickformat=","),
 )
 
-# Menampilkan label persen tepat di tengah
-fig_treemap.update_traces(textinfo="label+value", texttemplate="%{label}<br>%{value:,}", textposition="middle center")
+st.plotly_chart(fig_heatmap, use_container_width=True)
 
-# Tampilkan Treemap di Streamlit
-st.plotly_chart(fig_treemap, use_container_width=True)
+# 📊 Section 2: Heatmap - Top N Customer
+st.subheader("Heatmap - Top N Customer")
 
-# **📌 Section 2: Scatter Plot - Sales vs. Transaction Count**
-st.subheader("📈 Scatter Plot - Sales vs. Transaction Count")
+# 🎯 SLIDER Top N Customer DIPINDAHKAN ke sini (bukan di sidebar)
+top_n = st.slider("Tampilkan Top N Customer berdasarkan Total Sales", min_value=5, max_value=50, value=20)
 
-# Agregasi jumlah transaksi per customer
-transaction_count = df_filtered.groupby("Customers")["Total_Sales"].count().reset_index()
-transaction_count.columns = ["Customers", "Transaction_Count"]
-
-# Gabungkan dengan total sales
-scatter_data = sales_data.merge(transaction_count, on="Customers")
-
-# Buat Scatter Plot
-fig_scatter = px.scatter(
-    scatter_data, 
-    x="Transaction_Count", 
-    y="Total_Sales", 
-    size="Total_Sales", 
-    color="Total_Sales",
-    title="Total Sales vs. Transaction Count per Customer",
-    hover_data=["Customers", "Transaction_Count"],
-    color_continuous_scale="Blues"
+# Hitung total sales per customer dan ambil Top N
+top_customers = (
+    df_filtered.groupby("customers")["total_sales"]
+    .sum()
+    .nlargest(top_n)
+    .index
 )
 
-# Tampilkan Scatter Plot di Streamlit
-st.plotly_chart(fig_scatter, use_container_width=True)
+# Filter data hanya untuk top N customer
+df_top = df_filtered[df_filtered["customers"].isin(top_customers)]
+
+# Urutkan bulan
+df_top["month"] = pd.Categorical(df_top["month"], categories=month_order, ordered=True)
+
+# Buat pivot untuk heatmap
+heatmap_data = df_top.pivot_table(
+    index="customers", columns="month", values="total_sales", aggfunc="sum", fill_value=0
+)
+heatmap_data = heatmap_data[month_order]
+
+# Tampilkan heatmap
+fig_heatmap = px.imshow(
+    heatmap_data,
+    color_continuous_scale="Viridis",
+    labels=dict(x="Month", y="Customer", color="Total Sales"),
+    aspect="auto",
+    title=f"Heatmap Penjualan Bulanan Top {top_n} Customer - {', '.join(map(str, selected_years))}"
+)
+
+fig_heatmap.update_layout(
+    xaxis_side="top",
+    margin=dict(l=0, r=0, b=0, t=50),
+    coloraxis_colorbar=dict(title="Sales", tickformat=","),
+)
+
+st.plotly_chart(fig_heatmap, use_container_width=True)

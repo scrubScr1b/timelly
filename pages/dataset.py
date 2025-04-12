@@ -1,19 +1,21 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
+st.set_page_config(layout="wide")
+st.title("Upload Dataset")
 
-st.title("Data Preview")
+# Upload file
+uploaded_file = st.file_uploader("Upload Excel/CSV File", type=["xlsx", "csv"])
 
-@st.cache_data
-def load_data(file):
-    data = pd.read_excel(file)
-    return data
+if uploaded_file:
+    if uploaded_file.name.endswith(".csv"):
+        df = pd.read_csv(uploaded_file)
+    else:
+        df = pd.read_excel(uploaded_file)
 
-uploaded_file = st.file_uploader("Choose a file")
+    df.columns = df.columns.str.strip().str.lower()
+    st.session_state["data"] = df
+    st.success("Dataset berhasil dimuat!")
 
-if uploaded_file is None:
-    st.info("Upload a file through config")
-    st.stop()
-
-df = load_data(uploaded_file)
-st.dataframe(df)
+    # Tampilkan nama kolom
+    st.write("Kolom yang terbaca:", df.columns.tolist())

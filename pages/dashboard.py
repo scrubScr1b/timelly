@@ -3,189 +3,297 @@ import streamlit as st
 import altair as alt
 import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.ticker as mticker
 
 st.set_page_config(layout="wide")
-
 st.title("Market Dashboard")
 
-# Load data
-df = pd.read_excel("data/df_mz.xlsx")
+# Cek apakah data tersedia
+if "data" not in st.session_state:
+    st.warning("Silakan upload file terlebih dahulu di halaman utama.")
+    st.stop()
 
-# Format datetime
-df["Date"] = pd.to_datetime(df["Date"])
-df["Year"] = df["Date"].dt.year
-df["Month"] = df["Date"].dt.strftime("%b")
-df["Month_Num"] = df["Date"].dt.month
+df = st.session_state["data"]
 
-# Pilihan bulan dalam urutan yang benar
-month_order = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+# Cek dan format kolom date
+if "date" in df.columns:
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df = df.dropna(subset=["date"])
+    df["year"] = df["date"].dt.year
+    df["month"] = df["date"].dt.strftime("%b")
+    df["month_num"] = df["date"].dt.month
+    month_order = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+else:
+    st.error("Kolom 'date' tidak ditemukan di file.")
+    st.stop()
 
-# Sidebar filter
-all_years = sorted(df["Year"].unique())
+# Sidebar filters
+all_years = sorted(df["year"].unique())
 all_months = month_order
-all_brands = sorted(df["Brand"].unique())
-
 selected_years = st.sidebar.multiselect("Pilih Tahun", options=all_years, default=all_years)
 selected_months = st.sidebar.multiselect("Pilih Bulan", options=all_months, default=all_months)
-selected_brands = st.sidebar.multiselect("Pilih Brand", options=all_brands, default=all_brands)
 
-# Filter data
-df_filtered = df[(df["Year"].isin(selected_years)) & 
-                 (df["Month"].isin(selected_months)) & 
-                 (df["Brand"].isin(selected_brands))]
+df_filtered = df[df["year"].isin(selected_years) & df["month"].isin(selected_months)]
 
-# Data Preview
-with st.expander("Data Preview"):
-    st.dataframe(df_filtered)
+# Filter dinamis yang fleksibel (urut sesuai input user)
+filter_values = {}
+filter_candidates = [col for col in df.columns if df[col].nunique() < 100 and col not in ["date", "year", "month", "month_num"]]
 
-# KPI Section
-total_sales = df_filtered["Total_Sales"].sum()
-total_qty = df_filtered["Qty"].sum()
-unique_customers = df_filtered["Customers"].nunique()
+for col in filter_candidates:
+    if col in df_filtered.columns:
+        temp_df = df_filtered.copy()
+        for fcol, fval in filter_values.items():
+            temp_df = temp_df[temp_df[fcol].isin(fval)]
+        options = temp_df[col].dropna().unique().tolist()
+        selected = st.sidebar.multiselect(f"Pilih {col.title()}", options=options, default=options)
+        filter_values[col] = selected
 
+# Terapkan semua filter ke df_filtered
+for fcol, fval in filter_values.items():
+    df_filtered = df_filtered[df_filtered[fcol].isin(fval)]
+
+# KPI
 kpi1, kpi2, kpi3 = st.columns(3)
-
 with kpi1:
-    st.metric("Total Sales All Time", f"Rp {total_sales:,.0f}")
-
+    st.metric("Total Sales", f"Rp {df_filtered['total_sales'].sum():,.0f}" if "total_sales" in df_filtered.columns else "N/A")
 with kpi2:
-    st.metric("Total Quantity All Time", f"{total_qty:,.0f}")
-
+    st.metric("Total Quantity", f"{df_filtered['qty'].sum():,.0f}" if "qty" in df_filtered.columns else "N/A")
 with kpi3:
-    st.metric("Unique Customers", f"{unique_customers}")
+    st.metric("Unique Customers", f"{df_filtered['customers'].nunique()}" if "customers" in df_filtered.columns else "N/A")
 
-# Data Pivot
+# Pivot Tables
 col1, col2, col3, col4 = st.columns(4)
+
+# ====================
+# 📊 Perbandingan Qty & Sales per Tahun per Brand
+# ====================
+
+
+st.markdown("---")
+st.subheader("Perbandingan Total Sales per Tahun per Brand")
+
+if "brand" in df_filtered.columns and "total_sales" in df_filtered.columns:
+
+    # Agregasi total sales per brand per tahun
+    combined = df_filtered.groupby(["brand", "year"]).agg({
+        "total_sales": "sum"
+    }).reset_index()
+
+    # Pivot data ke bentuk tabel lebar
+    pivot_sales = combined.pivot(index="brand", columns="year", values="total_sales").add_prefix("Sales_")
+
+    # Hitung % perubahan antar tahun
+    years = sorted(df_filtered["year"].unique())
+    for i in range(1, len(years)):
+        prev = years[i - 1]
+        curr = years[i]
+        col_prev = f"Sales_{prev}"
+        col_curr = f"Sales_{curr}"
+        delta_col = f"Δ_{curr}_vs_{prev}"
+
+        if col_prev in pivot_sales.columns and col_curr in pivot_sales.columns:
+            pivot_sales[delta_col] = ((pivot_sales[col_curr] - pivot_sales[col_prev]) / pivot_sales[col_prev]) * 100
+
+    # Susun ulang kolom agar urut
+    ordered_cols = []
+    for y in years:
+        if f"Sales_{y}" in pivot_sales.columns:
+            ordered_cols.append(f"Sales_{y}")
+        if y > years[0]:
+            delta_col = f"Δ_{y}_vs_{years[years.index(y) - 1]}"
+            if delta_col in pivot_sales.columns:
+                ordered_cols.append(delta_col)
+
+    full_table = pivot_sales[ordered_cols].reset_index()
+
+    # Tambahkan baris TOTAL
+    total_row = {"brand": "TOTAL"}
+    for col in full_table.columns:
+        if col.startswith("Sales_"):
+            total_row[col] = full_table[col].sum()
+
+    # Hitung Δ_% total antar tahun
+    for i in range(1, len(years)):
+        prev = years[i - 1]
+        curr = years[i]
+        col_prev = f"Sales_{prev}"
+        col_curr = f"Sales_{curr}"
+        delta_col = f"Δ_{curr}_vs_{prev}"
+
+        if col_prev in full_table.columns and col_curr in full_table.columns:
+            total_prev = full_table[col_prev].sum()
+            total_curr = full_table[col_curr].sum()
+
+            if total_prev != 0:
+                total_row[delta_col] = ((total_curr - total_prev) / total_prev) * 100
+            else:
+                total_row[delta_col] = None
+
+    # Sisipkan baris total ke bawah
+    full_table.loc[len(full_table)] = total_row
+
+    # Format styling
+    format_dict = {}
+    for col in full_table.columns:
+        if col.startswith("Sales_"):
+            format_dict[col] = "Rp {:,.0f}"
+        elif col.startswith("Δ_"):
+            format_dict[col] = "{:+.1f}%"
+
+    st.dataframe(full_table.style.format(format_dict))
+
+else:
+    st.warning("Kolom 'brand' atau 'total_sales' tidak ditemukan.")
+
+
+
+
+# ====================
+# 📊 Table Per Tahun
+# ====================
+
 
 with col1:
     st.subheader("Top Customers")
-    pivot = pd.pivot_table(df_filtered, index="Customers", values=["Qty", "Total_Sales"], aggfunc="sum")
-    pivot = pivot.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
-    pivot = pivot.sort_values(by="Total Sales", ascending=False)
-    st.dataframe(pivot.style.format("{:,.0f}"))
+    if "customers" in df_filtered.columns:
+        pivot = pd.pivot_table(df_filtered, index="customers", values=["qty", "total_sales"], aggfunc="sum")
+        pivot = pivot.sort_values(by="total_sales", ascending=False)
+        st.dataframe(pivot.style.format("{:,.0f}"))
+    else:
+        st.info("Kolom 'customers' tidak tersedia.")
 
 with col2:
     st.subheader("Top Brand")
-    pivot = pd.pivot_table(df_filtered, index="Brand", values=["Qty", "Total_Sales"], aggfunc="sum")
-    pivot = pivot.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
-    pivot = pivot.sort_values(by="Total Sales", ascending=False)
-    st.dataframe(pivot.style.format("{:,.0f}"))
+    if "brand" in df_filtered.columns:
+        pivot = pd.pivot_table(df_filtered, index="brand", values=["qty", "total_sales"], aggfunc="sum")
+        pivot = pivot.sort_values(by="total_sales", ascending=False)
+        st.dataframe(pivot.style.format("{:,.0f}"))
+    else:
+        st.info("Kolom 'brand' tidak tersedia.")
 
 with col3:
     st.subheader("Sales per Year")
-    pivot_year = pd.pivot_table(df_filtered, index="Year", values=["Qty", "Total_Sales"], aggfunc="sum")
-    pivot_year = pivot_year.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
-    st.dataframe(pivot_year.style.format("{:,.0f}"))
+    pivot = pd.pivot_table(df_filtered, index="year", values=["qty", "total_sales"], aggfunc="sum")
+    st.dataframe(pivot.style.format("{:,.0f}"))
 
 with col4:
     st.subheader("Sales per Month")
-    pivot_month = pd.pivot_table(df_filtered, index="Month", values=["Qty", "Total_Sales"], aggfunc="sum")
-    pivot_month = pivot_month.reindex(month_order)
-    pivot_month = pivot_month.rename(columns={"Qty": "Quantity", "Total_Sales": "Total Sales"})
-    st.dataframe(pivot_month.style.format("{:,.0f}"))
+    pivot = pd.pivot_table(df_filtered, index="month", values=["qty", "total_sales"], aggfunc="sum")
+    pivot = pivot.reindex(month_order)
+    st.dataframe(pivot.style.format("{:,.0f}"))
 
-# ===================
-# 📊 VISUALISASI BAR
-# ===================
+# ====================
+# VISUALISASI
+# ====================
 st.markdown("---")
-st.subheader("📊 Sales Visualizations")
+st.subheader("Sales Visualizations")
 
-chart_option = st.selectbox("Pilih jenis data untuk visualisasi:", ["Total Sales", "Quantity", "Total Sales & Quantity"])
+chart_option = st.selectbox("Pilih data:", ["Total Sales", "Quantity", "Total Sales & Quantity"])
 
-# Top 10 Customers
-st.markdown("**Top 10 Customers**")
-top_customers_df = df_filtered.groupby("Customers")[["Qty", "Total_Sales"]].sum().sort_values(by="Total_Sales", ascending=False).head(10).reset_index()
+# Top Customers Chart
+if "customers" in df_filtered.columns:
+    st.markdown("**Top 10 Customers**")
+    top_customers_df = df_filtered.groupby("customers")[["qty", "total_sales"]].sum().sort_values(by="total_sales", ascending=False).head(10).reset_index()
 
-if chart_option == "Total Sales":
-    chart_top = alt.Chart(top_customers_df).mark_bar(color="#1f77b4").encode(
-        x=alt.X("Total_Sales:Q", title="Total Sales"),
-        y=alt.Y("Customers:N", sort='-x'),
-        tooltip=["Customers", "Total_Sales"])
-elif chart_option == "Quantity":
-    chart_top = alt.Chart(top_customers_df).mark_bar(color="#ff7f0e").encode(
-        x=alt.X("Qty:Q", title="Quantity"),
-        y=alt.Y("Customers:N", sort='-x'),
-        tooltip=["Customers", "Qty"])
-else:
-    bar = alt.Chart(top_customers_df).mark_bar(color="#1f77b4").encode(
-        x=alt.X("Total_Sales:Q"),
-        y=alt.Y("Customers:N", sort='-x'),
-        tooltip=["Customers", "Total_Sales"])
-    line = alt.Chart(top_customers_df).mark_line(color="#ff7f0e", point=True).encode(
-        x="Qty:Q",
-        y=alt.Y("Customers:N", sort='-x'),
-        tooltip=["Customers", "Qty"])
-    chart_top = bar + line
+    if chart_option == "Total Sales":
+        chart = alt.Chart(top_customers_df).mark_bar(color="#1f77b4").encode(
+            x="total_sales:Q", y=alt.Y("customers:N", sort='-x'), tooltip=["customers", "total_sales"]
+        )
+    elif chart_option == "Quantity":
+        chart = alt.Chart(top_customers_df).mark_bar(color="#ff7f0e").encode(
+            x="qty:Q", y=alt.Y("customers:N", sort='-x'), tooltip=["customers", "qty"]
+        )
+    else:
+        bar = alt.Chart(top_customers_df).mark_bar(color="#1f77b4").encode(
+            x="total_sales:Q", y=alt.Y("customers:N", sort='-x'), tooltip=["customers", "total_sales"]
+        )
+        line = alt.Chart(top_customers_df).mark_line(color="#ff7f0e", point=True).encode(
+            x="qty:Q", y=alt.Y("customers:N", sort='-x'), tooltip=["customers", "qty"]
+        )
+        chart = bar + line
 
-st.altair_chart(chart_top.properties(height=300), use_container_width=True)
+    st.altair_chart(chart.properties(height=300), use_container_width=True)
 
-# Sales per Month
+# Sales per Month Chart
 st.markdown("**Sales per Month**")
-sales_month_df = df_filtered.groupby("Month")[["Qty", "Total_Sales"]].sum().reindex(month_order).reset_index()
+monthly_df = df_filtered.groupby("month")[["qty", "total_sales"]].sum().reset_index()
+monthly_df["month_num"] = monthly_df["month"].apply(lambda x: month_order.index(x) + 1)
+monthly_df = monthly_df.sort_values(by="month_num").drop("month_num", axis=1)
 
 if chart_option == "Total Sales":
-    chart_month = alt.Chart(sales_month_df).mark_bar(color="#1f77b4").encode(
-        x=alt.X("Month:N", sort=month_order, axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Total_Sales:Q", title="Total Sales"),
-        tooltip=["Month", "Total_Sales"])
+    chart = alt.Chart(monthly_df).mark_bar(color="#1f77b4").encode(
+        x="month:N", y="total_sales:Q", tooltip=["month", "total_sales"]
+    )
 elif chart_option == "Quantity":
-    chart_month = alt.Chart(sales_month_df).mark_bar(color="#ff7f0e").encode(
-        x=alt.X("Month:N", sort=month_order, axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Qty:Q", title="Quantity"),
-        tooltip=["Month", "Qty"])
+    chart = alt.Chart(monthly_df).mark_bar(color="#ff7f0e").encode(
+        x="month:N", y="qty:Q", tooltip=["month", "qty"]
+    )
 else:
-    bar = alt.Chart(sales_month_df).mark_bar(color="#1f77b4").encode(
-        x=alt.X("Month:N", sort=month_order, axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Total_Sales:Q"),
-        tooltip=["Month", "Total_Sales"])
-    line = alt.Chart(sales_month_df).mark_line(color="#ff7f0e", point=True).encode(
-        x=alt.X("Month:N", sort=month_order, axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Qty:Q"),
-        tooltip=["Month", "Qty"])
-    chart_month = bar + line
+    bar = alt.Chart(monthly_df).mark_bar(color="#1f77b4").encode(
+        x="month:N", y="total_sales:Q", tooltip=["month", "total_sales"]
+    )
+    line = alt.Chart(monthly_df).mark_line(color="#ff7f0e", point=True).encode(
+        x="month:N", y="qty:Q", tooltip=["month", "qty"]
+    )
+    chart = bar + line
 
-st.altair_chart(chart_month.properties(height=300), use_container_width=True)
+st.altair_chart(chart.properties(height=300), use_container_width=True)
 
-# Sales per Year
-st.markdown("**Sales per Year**")
-sales_year_df = df_filtered.groupby("Year")[["Qty", "Total_Sales"]].sum().reset_index()
+# ====================
+# 📈 Kenaikan Omzet per Tahun
+# ====================
+st.markdown("---")
+st.subheader("Kenaikan Penjualan per Tahun")
 
-if chart_option == "Total Sales":
-    chart_year = alt.Chart(sales_year_df).mark_bar(color="#1f77b4").encode(
-        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Total_Sales:Q", title="Total Sales"),
-        tooltip=["Year", "Total_Sales"])
-elif chart_option == "Quantity":
-    chart_year = alt.Chart(sales_year_df).mark_bar(color="#ff7f0e").encode(
-        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Qty:Q", title="Quantity"),
-        tooltip=["Year", "Qty"])
+if "total_sales" in df_filtered.columns and "year" in df_filtered.columns:
+    sales_by_year = df_filtered.groupby("year")["total_sales"].sum().reset_index()
+
+    # Format angka menjadi dalam juta / miliar jika perlu
+    line_chart = alt.Chart(sales_by_year).mark_line(point=True, color="#2ca02c").encode(
+        x=alt.X("year:O", title="Tahun"),
+        y=alt.Y("total_sales:Q", title="Total Sales", axis=alt.Axis(format=",.0f")),
+        tooltip=[
+            alt.Tooltip("year:O", title="Tahun"),
+            alt.Tooltip("total_sales:Q", title="Total Sales", format=",.0f")
+        ]
+    ).properties(
+        width=700,
+        height=400,
+        title="Trend Kenaikan Omzet per Tahun"
+    )
+
+    st.altair_chart(line_chart, use_container_width=True)
 else:
-    bar = alt.Chart(sales_year_df).mark_bar(color="#1f77b4").encode(
-        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Total_Sales:Q"),
-        tooltip=["Year", "Total_Sales"])
-    line = alt.Chart(sales_year_df).mark_line(color="#ff7f0e", point=True).encode(
-        x=alt.X("Year:O", axis=alt.Axis(labelAngle=0)),
-        y=alt.Y("Qty:Q"),
-        tooltip=["Year", "Qty"])
-    chart_year = bar + line
+    st.warning("Data tidak lengkap untuk membuat line chart omzet.")
 
-st.altair_chart(chart_year.properties(height=300), use_container_width=True)
-
-# ===================
-# 🔥 Annotated Heatmap
-# ===================
+# Heatmap
 st.markdown("---")
 st.subheader("Heatmap Penjualan (Tahun vs Bulan)")
 
 heatmap_metric = st.radio("Pilih jenis data:", ["Total Sales", "Quantity"], horizontal=True)
+heatmap_data = df_filtered.groupby(["month", "year"])[["qty", "total_sales"]].sum().reset_index()
+pivot = heatmap_data.pivot(index="month", columns="year", values="total_sales" if heatmap_metric == "Total Sales" else "qty")
+pivot = pivot.reindex(month_order)
 
-heatmap_data = df_filtered.groupby(["Month", "Year"])[["Qty", "Total_Sales"]].sum().reset_index()
-heatmap_pivot = heatmap_data.pivot(index="Month", columns="Year", values="Total_Sales" if heatmap_metric == "Total Sales" else "Qty")
-heatmap_pivot = heatmap_pivot.reindex(index=month_order)
+fig, ax = plt.subplots(figsize=(12, 6))
+sns.set(font_scale=0.9)
 
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.heatmap(heatmap_pivot, annot=True, fmt=".0f", cmap="Blues", linewidths=.5, ax=ax)
-ax.set_title(f"{heatmap_metric} per Bulan dan Tahun")
+sns.heatmap(
+    pivot,
+    annot=True,
+    fmt=",.0f",
+    cmap="YlGnBu",
+    linewidths=0.5,
+    linecolor="white",
+    mask=pivot.isnull(),
+    cbar_kws={'format': 'Rp%1.0f' if heatmap_metric == "Total Sales" else '%d'}
+)
+
+ax.set_title(f"{heatmap_metric} per Bulan dan Tahun", fontsize=14, fontweight='bold')
+ax.set_xlabel("Tahun", fontsize=12)
+ax.set_ylabel("Bulan", fontsize=12)
+plt.xticks(rotation=45)
+plt.yticks(rotation=0)
+
 st.pyplot(fig)

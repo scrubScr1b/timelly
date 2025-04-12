@@ -19,28 +19,33 @@ st.markdown("""
 Model ini bertujuan untuk memprediksi *Y (Total Sales)* berdasarkan variabel input *X1* dan *X2*, secara terpisah untuk setiap customer.
 """)
 
-# Load data
-df = pd.read_excel("data/df_mz.xlsx")
+# Cek apakah data tersedia
+if "data" not in st.session_state:
+    st.warning("Silakan upload file terlebih dahulu di halaman utama.")
+    st.stop()
+
+df = st.session_state["data"]
+
 
 # Format kolom tanggal
-df["Date"] = pd.to_datetime(df["Date"])
-df["Year"] = df["Date"].dt.year
-df["Month"] = df["Date"].dt.month
-df["Month_Name"] = df["Date"].dt.strftime("%B")
+df["date"] = pd.to_datetime(df["date"])
+df["year"] = df["date"].dt.year
+df["month"] = df["date"].dt.month
+df["month_Name"] = df["date"].dt.strftime("%B")
 
 # Sidebar filter
-selected_year = st.sidebar.selectbox("Pilih Tahun", sorted(df["Year"].unique(), reverse=True))
-selected_month = st.sidebar.selectbox("Pilih Bulan", sorted(df["Month"].unique()))
+selected_year = st.sidebar.selectbox("Pilih Tahun", sorted(df["year"].unique(), reverse=True))
+selected_month = st.sidebar.selectbox("Pilih Bulan", sorted(df["month"].unique()))
 selected_customer = st.sidebar.selectbox("Pilih Customer", sorted(df["Customers"].unique()))
 
 # Filter data
-df_filtered = df[(df["Year"] == selected_year) & (df["Month"] == selected_month) & (df["Customers"] == selected_customer)]
+df_filtered = df[(df["year"] == selected_year) & (df["month"] == selected_month) & (df["Customers"] == selected_customer)]
 
 if df_filtered.empty:
     st.warning("Data tidak ditemukan untuk customer, bulan, dan tahun yang dipilih.")
 else:
     # Agregasi bulanan untuk model per customer
-    train = df[df["Customers"] == selected_customer].groupby(["Year", "Month"]).agg(
+    train = df[df["Customers"] == selected_customer].groupby(["year", "month"]).agg(
         Total_Transactions=("No_Invoice", "nunique"),
         Total_Qty=("Qty", "sum"),
         Total_Sales=("Total_Sales", "sum")
@@ -50,18 +55,18 @@ else:
     next_month = selected_month + 1 if selected_month < 12 else 1
     next_year = selected_year if selected_month < 12 else selected_year + 1
 
-    test = df[(df["Year"] == next_year) & (df["Month"] == next_month) & (df["Customers"] == selected_customer)]
+    test = df[(df["year"] == next_year) & (df["month"] == next_month) & (df["Customers"] == selected_customer)]
     if test.empty:
         st.warning("Tidak ada data historis untuk bulan berikutnya untuk customer ini.")
     else:
-        test_agg = test.groupby(["Year", "Month"]).agg(
+        test_agg = test.groupby(["year", "month"]).agg(
             Total_Transactions=("No_Invoice", "nunique"),
             Total_Qty=("Qty", "sum"),
             Total_Sales=("Total_Sales", "sum")
         ).reset_index()
 
         # Model Regresi Linear
-        train_filtered = train[(train["Year"] < next_year) | ((train["Year"] == next_year) & (train["Month"] < next_month))]
+        train_filtered = train[(train["year"] < next_year) | ((train["year"] == next_year) & (train["month"] < next_month))]
 
         X_train = train_filtered[["Total_Transactions", "Total_Qty"]]
         y_train = train_filtered["Total_Sales"]
@@ -94,7 +99,7 @@ else:
 
         # Output
         st.markdown(f"### Prediksi Omset Bulan Berikutnya untuk {selected_customer}: {next_month:02}/{next_year}")
-        st.dataframe(test_agg[["Year", "Month", "Total_Transactions", "Total_Qty", "Total_Sales", "Predicted_Linear", "Predicted_RF"]])
+        st.dataframe(test_agg[["year", "month", "Total_Transactions", "Total_Qty", "Total_Sales", "Predicted_Linear", "Predicted_RF"]])
 
         st.subheader("🔍 Model Evaluation Metrics")
         st.markdown("**Regresi Linear**")
@@ -108,12 +113,12 @@ else:
         historical_preds = train_filtered.copy()
         historical_preds["Predicted_Linear"] = model_ols.predict(sm.add_constant(historical_preds[["Total_Transactions", "Total_Qty"]]))
         historical_preds["Selisih"] = historical_preds["Total_Sales"] - historical_preds["Predicted_Linear"]
-        st.dataframe(historical_preds[["Year", "Month", "Total_Sales", "Predicted_Linear", "Selisih"]])
+        st.dataframe(historical_preds[["year", "month", "Total_Sales", "Predicted_Linear", "Selisih"]])
 
         # Visualisasi Bar Chart hanya untuk bulan yang dipilih
         st.subheader("📊 Visualisasi Perbandingan Prediksi vs Aktual (Bar Chart)")
-        current_data = historical_preds[historical_preds["Month"] == selected_month]
-        current_data["Label"] = current_data["Year"].astype(str) + "-" + current_data["Month"].astype(str).str.zfill(2)
+        current_data = historical_preds[historical_preds["month"] == selected_month]
+        current_data["Label"] = current_data["year"].astype(str) + "-" + current_data["month"].astype(str).str.zfill(2)
 
         current_data["Predicted_RF"] = rf_model.predict(current_data[["Total_Transactions", "Total_Qty"]])
         melted_df = current_data.melt(id_vars=["Label"], 
