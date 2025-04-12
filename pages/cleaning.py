@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 st.set_page_config(page_title="Data Cleaning", layout="wide")
-st.title("🧹 Data Cleaning Page")
+st.title("Data Cleaning Page")
 
 # Cek apakah data tersedia
 if "data" not in st.session_state:
@@ -55,6 +55,6 @@ st.subheader("Cleaned Data Preview")
 st.dataframe(df.head(20), use_container_width=True)
 
 # Save cleaned data to CSV
-if st.button("💾 Simpan Data Cleaning"):
+if st.button("Simpan Data Cleaning"):
     df.to_csv("data/cleaned_data.csv", index=False)
     st.success("Data berhasil disimpan ke 'cleaned_data.csv'")
