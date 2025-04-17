@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Data Cleaning", layout="wide")
 st.title("Data Cleaning Page")
 
 # Cek apakah data tersedia
@@ -50,6 +49,28 @@ if cols_to_drop:
     df.drop(columns=cols_to_drop, inplace=True)
     st.warning(f"Kolom {cols_to_drop} telah dihapus.")
 
+
+# Ubah Tipe Data Kolom
+st.subheader("Ubah Tipe Data Kolom")
+col_to_convert = st.selectbox("Pilih kolom yang ingin diubah tipenya", df.columns)
+
+type_options = ["int", "float", "str", "datetime"]
+selected_type = st.selectbox("Pilih tipe data baru", type_options)
+
+if st.button("Ubah Tipe Data"):
+    try:
+        if selected_type == "int":
+            df[col_to_convert] = df[col_to_convert].astype(int)
+        elif selected_type == "float":
+            df[col_to_convert] = df[col_to_convert].astype(float)
+        elif selected_type == "str":
+            df[col_to_convert] = df[col_to_convert].astype(str)
+        elif selected_type == "datetime":
+            df[col_to_convert] = pd.to_datetime(df[col_to_convert], errors="coerce")
+        st.success(f"Tipe data kolom '{col_to_convert}' berhasil diubah menjadi {selected_type}.")
+    except Exception as e:
+        st.error(f"Gagal mengubah tipe data: {e}")
+        
 # Show cleaned data preview
 st.subheader("Cleaned Data Preview")
 st.dataframe(df.head(20), use_container_width=True)

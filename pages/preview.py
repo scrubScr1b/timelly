@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Data Cleaning", layout="wide")
+
 st.title("Data Preview")
 
 # Cek apakah data tersedia

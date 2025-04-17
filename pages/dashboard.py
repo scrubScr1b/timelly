@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.ticker as mticker
 
-st.set_page_config(layout="wide")
 st.title("Market Dashboard")
 
 # Cek apakah data tersedia
@@ -36,9 +35,14 @@ selected_months = st.sidebar.multiselect("Pilih Bulan", options=all_months, defa
 
 df_filtered = df[df["year"].isin(selected_years) & df["month"].isin(selected_months)]
 
-# Filter dinamis yang fleksibel (urut sesuai input user)
+
+#=============
+# FILTER PANE
+#=============
+
 filter_values = {}
-filter_candidates = [col for col in df.columns if df[col].nunique() < 100 and col not in ["date", "year", "month", "month_num"]]
+desired_order = ["dept", "customers", "brand"]
+filter_candidates = [col for col in desired_order if col in df.columns]
 
 for col in filter_candidates:
     if col in df_filtered.columns:
@@ -49,9 +53,10 @@ for col in filter_candidates:
         selected = st.sidebar.multiselect(f"Pilih {col.title()}", options=options, default=options)
         filter_values[col] = selected
 
-# Terapkan semua filter ke df_filtered
 for fcol, fval in filter_values.items():
     df_filtered = df_filtered[df_filtered[fcol].isin(fval)]
+
+
 
 # KPI
 kpi1, kpi2, kpi3 = st.columns(3)
@@ -215,7 +220,10 @@ if "customers" in df_filtered.columns:
 
     st.altair_chart(chart.properties(height=300), use_container_width=True)
 
+# ====================
 # Sales per Month Chart
+# ====================
+
 st.markdown("**Sales per Month**")
 monthly_df = df_filtered.groupby("month")[["qty", "total_sales"]].sum().reset_index()
 monthly_df["month_num"] = monthly_df["month"].apply(lambda x: month_order.index(x) + 1)
@@ -267,33 +275,17 @@ if "total_sales" in df_filtered.columns and "year" in df_filtered.columns:
 else:
     st.warning("Data tidak lengkap untuk membuat line chart omzet.")
 
-# Heatmap
-st.markdown("---")
-st.subheader("Heatmap Penjualan (Tahun vs Bulan)")
+st.markdown("**Penjualan per Kategori**")
+if "dept" in df_filtered.columns:
+    category_sales = df_filtered.groupby("dept")["total_sales"].sum().reset_index()
+    chart = alt.Chart(category_sales).mark_bar().encode(
+        x="dept:N", y="total_sales:Q", color="dept:N", tooltip=["dept", "total_sales"]
+    ).properties(
+        width=700,
+        height=400,
+        title="Penjualan per Kategori"
+    )
 
-heatmap_metric = st.radio("Pilih jenis data:", ["Total Sales", "Quantity"], horizontal=True)
-heatmap_data = df_filtered.groupby(["month", "year"])[["qty", "total_sales"]].sum().reset_index()
-pivot = heatmap_data.pivot(index="month", columns="year", values="total_sales" if heatmap_metric == "Total Sales" else "qty")
-pivot = pivot.reindex(month_order)
-
-fig, ax = plt.subplots(figsize=(12, 6))
-sns.set(font_scale=0.9)
-
-sns.heatmap(
-    pivot,
-    annot=True,
-    fmt=",.0f",
-    cmap="YlGnBu",
-    linewidths=0.5,
-    linecolor="white",
-    mask=pivot.isnull(),
-    cbar_kws={'format': 'Rp%1.0f' if heatmap_metric == "Total Sales" else '%d'}
-)
-
-ax.set_title(f"{heatmap_metric} per Bulan dan Tahun", fontsize=14, fontweight='bold')
-ax.set_xlabel("Tahun", fontsize=12)
-ax.set_ylabel("Bulan", fontsize=12)
-plt.xticks(rotation=45)
-plt.yticks(rotation=0)
-
-st.pyplot(fig)
+    st.altair_chart(chart, use_container_width=True)
+else:
+    st.warning("Kolom 'dept' tidak tersedia.")
