@@ -1,3 +1,4 @@
 username,password,role
 admin,admin,admin
 user,user,user
+rafly,rafly,user

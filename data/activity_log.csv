@@ -1,0 +1,10 @@
+timestamp,username,action,detail
+2025-04-17 21:20:33,admin,logout,
+2025-04-17 21:20:39,rafly,login,success
+2025-04-17 21:21:00,rafly,change_password,password updated
+2025-04-17 21:21:03,rafly,logout,
+2025-04-17 21:21:07,admin,login,success
+2025-04-17 21:49:22,admin,login,success
+2025-04-17 22:13:24,admin,login,success
+2025-04-17 22:19:27,admin,login,success
+2025-04-17 23:13:37,admin,login,success
