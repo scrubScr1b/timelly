@@ -136,7 +136,7 @@ if not st.session_state["logged_in"]:
 
 # ------------------------ POST LOGIN VIEW ------------------------ #
 
-st.sidebar.success(f"Halo, {st.session_state['username']}!")
+st.sidebar.success(f"Halo, {st.session_state['username']} !")
 logout()
 change_password_modal()
 
