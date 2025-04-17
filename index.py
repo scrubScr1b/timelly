@@ -1,28 +1,28 @@
 import streamlit as st
 import pandas as pd
-import hashlib
 import os
 
 st.set_page_config(page_title="Timelly", layout="wide")
 
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+# Remove the hash_password function since we don't need hashing anymore
+# def hash_password(password):
+#     return hashlib.sha256(password.encode()).hexdigest()
 
 def load_users():
-    if not os.path.exists("users.csv"):
-        pd.DataFrame(columns=["username", "password"]).to_csv("users.csv", index=False)
-    return pd.read_csv("users.csv")
+    if not os.path.exists("data/users.csv"):
+        pd.DataFrame(columns=["username", "password"]).to_csv("data/users.csv", index=False)
+    return pd.read_csv("data/users.csv")
 
 def save_user(username, password):
     users = load_users()
-    new_user = pd.DataFrame([[username, hash_password(password)]], columns=["username", "password"])
+    new_user = pd.DataFrame([[username, password]], columns=["username", "password"])
     users = pd.concat([users, new_user], ignore_index=True)
-    users.to_csv("users.csv", index=False)
+    users.to_csv("data/users.csv", index=False)
 
 def login_user(username, password):
     users = load_users()
-    hashed = hash_password(password)
-    return ((users['username'] == username) & (users['password'] == hashed)).any()
+    # Compare directly with plain password (no hashing)
+    return ((users['username'] == username) & (users['password'] == password)).any()
 
 def login_form():
     st.subheader("Login Into Account")
@@ -71,9 +71,8 @@ def change_password_modal():
         if st.button("Update Password", key="update_pw_btn"):
             users = load_users()
             username = st.session_state["username"]
-            hashed_current = hash_password(current_pw)
 
-            user_match = (users["username"] == username) & (users["password"] == hashed_current)
+            user_match = (users["username"] == username) & (users["password"] == current_pw)
             if not user_match.any():
                 st.error("Password lama salah.")
                 return
@@ -81,8 +80,8 @@ def change_password_modal():
                 st.warning("Password baru tidak cocok.")
                 return
 
-            users.loc[user_match, "password"] = hash_password(new_pw)
-            users.to_csv("users.csv", index=False)
+            users.loc[user_match, "password"] = new_pw
+            users.to_csv("data/users.csv", index=False)
             st.success("Password berhasil diubah.")
 
 
@@ -123,6 +122,9 @@ pages = {
     ],
     "Forecasting": [
         st.Page("pages/forecast.py", title="Coming Soon"),
+    ],
+    "Admin Panel": [
+        st.Page("pages/crud.py", title="Manage User"),
     ],
 }
 
