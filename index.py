@@ -176,7 +176,8 @@ admin_pages = {
     ]
 }
 
-pages = admin_pages if st.session_state["role"] == "admin" else user_pages
+if st.session_state["logged_in"]:
+    pages = admin_pages if st.session_state["role"] == "admin" else user_pages
+    pg = st.navigation(pages)
+    pg.run()
 
-pg = st.navigation(pages)
-pg.run()
