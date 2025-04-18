@@ -151,46 +151,19 @@ def admin_panel():
     else:
         st.info("Belum ada log aktivitas.")
 
-# user_pages = {
-#     "Dataset": [
-#         st.Page("app_pages/preview.py", title="Preview Dataset"),
-#     ],
-#     "Market": [
-#         st.Page("app_pages/dashboard.py", title="Dashboard"),
-#         st.Page("app_pages/heatmap.py", title="Heat Map"),
-#     ],
-#     "Data ETL": [
-#         st.Page("app_pages/cleaning.py", title="Data Cleaning"),
-#     ],
-#     "Forecasting": [
-#         st.Page("app_pages/forecast.py", title="SARIMAX x BLSTM"),
-#     ]
-# }
-
-# admin_pages = {
-#     **user_pages,
-#     "Admin Panel": [
-#         st.Page(admin_panel, title="Log Aktivitas"),
-#         st.Page("app_pages/crud.py", title="Manage User"),
-#         st.Page("app_pages/dataset.py", title="Upload Dataset"),
-#     ]
-# }
-
-from app_pages import preview, dashboard, heatmap, cleaning, forecast, crud, dataset
-
 user_pages = {
     "Dataset": [
-        st.Page(preview.render, title="Preview Dataset"),
+        st.Page("pages/preview.py", title="Preview Dataset"),
     ],
     "Market": [
-        st.Page(dashboard.render, title="Dashboard"),
-        st.Page(heatmap.render, title="Heat Map"),
+        st.Page("pages/dashboard.py", title="Dashboard"),
+        st.Page("pages/heatmap.py", title="Heat Map"),
     ],
     "Data ETL": [
-        st.Page(cleaning.render, title="Data Cleaning"),
+        st.Page("pages/cleaning.py", title="Data Cleaning"),
     ],
     "Forecasting": [
-        st.Page(forecast.render, title="SARIMAX x BLSTM"),
+        st.Page("pages/forecast.py", title="SARIMAX x BLSTM"),
     ]
 }
 
@@ -198,11 +171,10 @@ admin_pages = {
     **user_pages,
     "Admin Panel": [
         st.Page(admin_panel, title="Log Aktivitas"),
-        st.Page(crud.render, title="Manage User"),
-        st.Page(dataset.render, title="Upload Dataset"),
+        st.Page("pages/crud.py", title="Manage User"),
+        st.Page("pages/dataset.py", title="Upload Dataset"),
     ]
 }
-
 
 if st.session_state["logged_in"]:
     pages = admin_pages if st.session_state["role"] == "admin" else user_pages
