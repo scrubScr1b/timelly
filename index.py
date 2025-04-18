@@ -153,17 +153,17 @@ def admin_panel():
 
 user_pages = {
     "Dataset": [
-        st.Page("pages/preview.py", title="Preview Dataset"),
+        st.Page("app_pages/preview.py", title="Preview Dataset"),
     ],
     "Market": [
-        st.Page("pages/dashboard.py", title="Dashboard"),
-        st.Page("pages/heatmap.py", title="Heat Map"),
+        st.Page("app_pages/dashboard.py", title="Dashboard"),
+        st.Page("app_pages/heatmap.py", title="Heat Map"),
     ],
     "Data ETL": [
-        st.Page("pages/cleaning.py", title="Data Cleaning"),
+        st.Page("app_pages/cleaning.py", title="Data Cleaning"),
     ],
     "Forecasting": [
-        st.Page("pages/forecast.py", title="SARIMAX x BLSTM"),
+        st.Page("app_pages/forecast.py", title="SARIMAX x BLSTM"),
     ]
 }
 
@@ -171,8 +171,8 @@ admin_pages = {
     **user_pages,
     "Admin Panel": [
         st.Page(admin_panel, title="Log Aktivitas"),
-        st.Page("pages/crud.py", title="Manage User"),
-        st.Page("pages/dataset.py", title="Upload Dataset"),
+        st.Page("app_pages/crud.py", title="Manage User"),
+        st.Page("app_pages/dataset.py", title="Upload Dataset"),
     ]
 }
 
