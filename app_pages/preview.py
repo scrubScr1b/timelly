@@ -2,7 +2,11 @@ import streamlit as st
 import pandas as pd
 from utils import load_saved_dataset 
 
-st.title("Data Preview")
+def render():
+    st.title("Preview Dataset")
+    st.write("Isi halaman Preview di sini")
+
+# st.title("Data Preview")
 
 # Cek apakah data tersedia, jika belum coba load dari file
 if "data" not in st.session_state:
