@@ -31,7 +31,7 @@ def log_activity(username, action, detail=""):
     os.makedirs("data", exist_ok=True)
     log_path = "data/activity_log.csv"
     
-    # Set timezone ke Indonesia (WIB)
+    # Set timezone to Indonesia (WIB)
     wib = pytz.timezone("Asia/Jakarta")
     timestamp = datetime.now(wib).strftime("%Y-%m-%d %H:%M:%S")
     
@@ -59,27 +59,27 @@ def login_form():
             st.session_state["username"] = username
             st.session_state["role"] = role
             log_activity(username, "login", "success")
-            st.success("Login berhasil!")
+            st.success("Login successful!")
             st.rerun()
         else:
-            st.error("Username atau password salah.")
+            st.error("Incorrect username or password.")
             log_activity(username, "login", "failed")
 
 def register_form():
     st.subheader("Register New Account")
-    username = st.text_input("Username Baru")
+    username = st.text_input("New Username")
     password = st.text_input("Password", type="password")
-    confirm = st.text_input("Konfirmasi Password", type="password")
+    confirm = st.text_input("Confirm Password", type="password")
     register_btn = st.button("Register")
 
     if register_btn:
         if password != confirm:
-            st.warning("Password tidak cocok!")
+            st.warning("Passwords do not match!")
         elif username in load_users()['username'].values:
-            st.warning("Username sudah terdaftar!")
+            st.warning("Username already registered!")
         else:
             save_user(username, password)
-            st.success("Registrasi berhasil! Silakan login.")
+            st.success("Registration successful! Please log in.")
             log_activity(username, "register", "user registered")
             st.rerun()
 
@@ -92,27 +92,27 @@ def logout():
         st.rerun()
 
 def change_password_modal():
-    with st.sidebar.popover("Ganti Password"):
-        st.subheader("Ganti Password")
-        current_pw = st.text_input("Password Lama", type="password", key="old_pw")
-        new_pw = st.text_input("Password Baru", type="password", key="new_pw")
-        confirm_pw = st.text_input("Konfirmasi Password Baru", type="password", key="confirm_pw")
+    with st.sidebar.popover("Change Password"):
+        st.subheader("Change Password")
+        current_pw = st.text_input("Current Password", type="password", key="old_pw")
+        new_pw = st.text_input("New Password", type="password", key="new_pw")
+        confirm_pw = st.text_input("Confirm New Password", type="password", key="confirm_pw")
         if st.button("Update Password", key="update_pw_btn"):
             users = load_users()
             username = st.session_state["username"]
 
             user_match = (users["username"] == username) & (users["password"] == current_pw)
             if not user_match.any():
-                st.error("Password lama salah.")
+                st.error("Incorrect current password.")
                 return
             if new_pw != confirm_pw:
-                st.warning("Password baru tidak cocok.")
+                st.warning("New passwords do not match.")
                 return
 
             users.loc[user_match, "password"] = new_pw
             users.to_csv("data/users.csv", index=False)
             log_activity(username, "change_password", "password updated")
-            st.success("Password berhasil diubah.")
+            st.success("Password successfully updated.")
 
 # ------------------------ SESSION INIT ------------------------ #
 
@@ -124,7 +124,7 @@ if "logged_in" not in st.session_state:
 # ------------------------ AUTH FLOW ------------------------ #
 
 if not st.session_state["logged_in"]:
-    st.title("Holla Welcome to Timelly!")
+    st.title("Welcome to Timelly!")
     auth_mode = st.radio("Select Action", ["Login", "Register"], horizontal=True)
 
     if auth_mode == "Login":
@@ -136,20 +136,20 @@ if not st.session_state["logged_in"]:
 
 # ------------------------ POST LOGIN VIEW ------------------------ #
 
-st.sidebar.success(f"Halo, {st.session_state['username']} !")
+st.sidebar.success(f"Hello, {st.session_state['username']}!")
 logout()
 change_password_modal()
 
 # ------------------------ ROLE-BASED NAVIGATION ------------------------ #
 
 def admin_panel():
-    st.subheader("Admin Panel - Log Aktivitas")
+    st.subheader("Admin Panel - Activity Logs")
     log_path = "data/activity_log.csv"
     if os.path.exists(log_path):
         df = pd.read_csv(log_path)
         st.dataframe(df)
     else:
-        st.info("Belum ada log aktivitas.")
+        st.info("No activity logs yet.")
 
 user_pages = {
     "Dataset": [
@@ -170,8 +170,8 @@ user_pages = {
 admin_pages = {
     **user_pages,
     "Admin Panel": [
-        st.Page(admin_panel, title="Log Aktivitas"),
-        st.Page("pages/crud.py", title="Manage User"),
+        st.Page(admin_panel, title="Activity Logs"),
+        st.Page("pages/crud.py", title="Manage Users"),
         st.Page("pages/dataset.py", title="Upload Dataset"),
     ]
 }
@@ -180,4 +180,3 @@ if st.session_state["logged_in"]:
     pages = admin_pages if st.session_state["role"] == "admin" else user_pages
     pg = st.navigation(pages)
     pg.run()
-

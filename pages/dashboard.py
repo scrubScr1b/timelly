@@ -6,11 +6,7 @@ import seaborn as sns
 import matplotlib.ticker as mticker
 from utils import load_saved_dataset 
 
-# st.title("Market Dashboard")
-
-def render():
-    st.title("Preview Dataset")
-    st.write("Isi halaman Preview di sini")
+st.title("Market Dashboard")
 
 # Cek apakah data tersedia, jika belum coba load dari file
 if "data" not in st.session_state:
@@ -288,7 +284,7 @@ if "total_sales" in df_filtered.columns and "year" in df_filtered.columns:
 else:
     st.warning("Data tidak lengkap untuk membuat line chart omzet.")
 
-st.markdown("**Penjualan per Kategori**")
+st.markdown("**Penjualan per Department**")
 if "dept" in df_filtered.columns:
     category_sales = df_filtered.groupby("dept")["total_sales"].sum().reset_index()
     chart = alt.Chart(category_sales).mark_bar().encode(
@@ -296,7 +292,6 @@ if "dept" in df_filtered.columns:
     ).properties(
         width=700,
         height=400,
-        title="Penjualan per Kategori"
     )
 
     st.altair_chart(chart, use_container_width=True)
