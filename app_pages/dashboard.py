@@ -6,7 +6,11 @@ import seaborn as sns
 import matplotlib.ticker as mticker
 from utils import load_saved_dataset 
 
-st.title("Market Dashboard")
+# st.title("Market Dashboard")
+
+def render():
+    st.title("Preview Dataset")
+    st.write("Isi halaman Preview di sini")
 
 # Cek apakah data tersedia, jika belum coba load dari file
 if "data" not in st.session_state:
