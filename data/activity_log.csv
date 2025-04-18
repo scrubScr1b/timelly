@@ -10,3 +10,12 @@ timestamp,username,action,detail
 2025-04-17 23:13:37,admin,login,success
 2025-04-17 23:36:50,admin,login,success
 2025-04-17 23:41:47,admin,login,success
+2025-04-18 14:25:55,admin,login,success
+2025-04-18 14:25:57,admin,logout,
+2025-04-18 14:26:14,admin,login,success
+2025-04-18 14:29:57,admin,logout,
+2025-04-18 14:30:00,user,login,success
+2025-04-18 14:33:36,user,logout,
+2025-04-18 14:33:41,admin,login,success
+2025-04-18 14:38:34,admin,login,success
+2025-04-18 14:39:47,user,login,success

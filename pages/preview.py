@@ -1,13 +1,21 @@
 import streamlit as st
 import pandas as pd
-
+from utils import load_saved_dataset 
 
 st.title("Data Preview")
 
-# Cek apakah data tersedia
+# Cek apakah data tersedia, jika belum coba load dari file
 if "data" not in st.session_state:
-    st.warning("Silakan upload file terlebih dahulu di halaman utama.")
-    st.stop()
+    df, source = load_saved_dataset()
+    if df is not None:
+        st.session_state["data"] = df
+        st.session_state["source"] = source
+    else:
+        if st.session_state.get("role") == "admin":
+            st.warning("Silakan upload file terlebih dahulu di halaman admin")
+        else:
+            st.warning("Admin Belum Mengupload File Dataset!")
+        st.stop()
 
 # Ambil data dari session state
 df = st.session_state["data"]

@@ -4,13 +4,22 @@ import altair as alt
 import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.ticker as mticker
+from utils import load_saved_dataset 
 
 st.title("Market Dashboard")
 
-# Cek apakah data tersedia
+# Cek apakah data tersedia, jika belum coba load dari file
 if "data" not in st.session_state:
-    st.warning("Silakan upload file terlebih dahulu di halaman utama.")
-    st.stop()
+    df, source = load_saved_dataset()
+    if df is not None:
+        st.session_state["data"] = df
+        st.session_state["source"] = source
+    else:
+        if st.session_state.get("role") == "admin":
+            st.warning("Silakan upload file terlebih dahulu di halaman admin")
+        else:
+            st.warning("Admin Belum Mengupload File Dataset!")
+        st.stop()
 
 df = st.session_state["data"]
 

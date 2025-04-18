@@ -5,7 +5,10 @@ st.title("Data Cleaning")
 
 # Cek apakah data tersedia
 if "data" not in st.session_state:
-    st.warning("Silakan upload file terlebih dahulu di halaman utama.")
+    if st.session_state.get("role") == "admin":
+        st.warning("Silakan upload file terlebih dahulu di halaman admin")
+    else:
+        st.warning("Admin belum upload file.")
     st.stop()
 
 # Ambil dataset dari session state
