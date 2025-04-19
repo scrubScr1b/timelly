@@ -80,3 +80,10 @@ timestamp,username,action,detail
 2025-04-19 11:51:36,tol,register,user registered
 2025-04-19 11:54:47,aa,register,user registered
 2025-04-19 11:55:07,aa,login,success
+2025-04-19 12:00:55,aa,logout,
+2025-04-19 12:00:59,admin,login,success
+2025-04-19 12:20:14,admin,login,success
+2025-04-19 12:31:11,user,login,success
+2025-04-19 12:31:14,user,logout,
+2025-04-19 12:31:18,admin,login,success
+2025-04-19 12:40:28,admin,login,success

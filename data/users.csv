@@ -1,9 +1,3 @@
 username,password,role
-admin,admin,admin
 user,user,user
-rafly,rafly,user
-a,a,user
-new,new,user
-test,test,user
-tol,tol,user
-aa,aa,user
+admin,admin,admin
