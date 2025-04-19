@@ -35,7 +35,13 @@ data = st.session_state["data"]
 st.sidebar.header("Parameter Filter")
 start_date = st.sidebar.text_input("Start Date (YYYY-MM)", "2020-01")
 end_date = st.sidebar.text_input("End Date (YYYY-MM)", "2024-12")
-brand_filter = st.sidebar.multiselect("Filter Brand", options=data['customers'].unique(), default=['Toys Kingdom'])
+# brand_filter = st.sidebar.multiselect("Filter Brand", options=data['customers'].unique(), default=['Toys Kingdom'])
+brand_filter = st.sidebar.multiselect("Filter Customers", options=data['customers'].unique())
+
+# --- Validasi Brand Filter ---
+if not brand_filter:
+    st.warning("Mohon diisi untuk Ccustomers-nya terlebih dahulu di sidebar.")
+    st.stop()
 
 # --- Parameter Model ---
 st.sidebar.header("SARIMAX Parameters")
