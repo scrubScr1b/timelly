@@ -191,6 +191,7 @@ import os
 from datetime import datetime
 import pytz
 from pages.sidebar import admin_pages, user_pages
+import time
 
 st.set_page_config(page_title="timelly", layout="wide",initial_sidebar_state="collapsed")
 
@@ -283,6 +284,7 @@ def register_form():
             save_user(username, password)
             st.success("Registration successful! Please log in.")
             log_activity(username, "register", "user registered")
+            time.sleep(2)
             st.rerun()
 
 def logout():
