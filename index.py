@@ -192,7 +192,7 @@ from datetime import datetime
 import pytz
 from pages.sidebar import admin_pages, user_pages
 
-st.set_page_config(page_title="timelly", layout="wide")
+st.set_page_config(page_title="timelly", layout="wide",initial_sidebar_state="collapsed")
 
 # ------------------------ SESSION INIT ------------------------ #
 
