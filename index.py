@@ -220,6 +220,10 @@ def log_activity(username, action, detail=""):
 # ------------------------ AUTH FORMS ------------------------ #
 
 def login_form():
+    if st.session_state.get("just_registered"):
+        st.success("Registration successful! Please log in.")
+        st.session_state["just_registered"] = False  # Reset setelah ditampilkan
+
     st.subheader("Login Into Account")
     username = st.text_input("Username", key="login_username")
     password = st.text_input("Password", type="password", key="login_password")
@@ -252,9 +256,10 @@ def register_form():
             st.warning("Username already registered!")
         else:
             save_user(username, password)
-            st.success("Registration successful! Please log in.")
+            # st.success("Registration successful! Please log in.")
             log_activity(username, "register", "user registered")
             # time.sleep(1)
+            st.session_state["just_registered"] = True #new
             st.session_state["auth_mode"] = "Login"  # switch otomatis ke login
             st.rerun()
 
