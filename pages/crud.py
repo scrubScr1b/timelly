@@ -216,14 +216,15 @@ def delete_user(username):
 def admin_panel():
     st.title("Admin Panel - CRUD User")
 
-    # Tambah User
-    st.subheader("Tambah User")
-    if "new_username" not in st.session_state:
+    # Inisialisasi session_state untuk form fields
+    if 'new_username' not in st.session_state:
         st.session_state.new_username = ""
         st.session_state.new_password = ""
         st.session_state.confirm_password = ""
         st.session_state.new_role = "user"
 
+    # Tambah User
+    st.subheader("Tambah User")
     with st.form("form_tambah", clear_on_submit=True):
         new_username = st.text_input("Username Baru", value=st.session_state.new_username)
         new_password = st.text_input("Password", type="password", value=st.session_state.new_password)
@@ -239,7 +240,7 @@ def admin_panel():
             else:
                 save_user(new_username, new_password, new_role)
                 st.success(f"User {new_username} berhasil ditambahkan!")
-                # Update session state to reset form fields
+                # Reset the form fields in session_state after successful submission
                 st.session_state.new_username = ""
                 st.session_state.new_password = ""
                 st.session_state.confirm_password = ""
@@ -276,3 +277,4 @@ def admin_panel():
 
 # Jalankan
 admin_panel()
+
