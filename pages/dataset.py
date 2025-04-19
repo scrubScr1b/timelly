@@ -45,6 +45,7 @@ def upload_dataset():
         st.session_state["data"] = df
         st.success("Dataset berhasil diupload dan disimpan!")
         st.write("Kolom yang terbaca:", df.columns.tolist())
+        st.rerun()
 
 
 def delete_dataset():
@@ -57,6 +58,7 @@ def delete_dataset():
         st.session_state.pop("data", None)
         st.session_state.pop("source", None)
         st.success("Dataset berhasil dihapus!")
+        st.rerun()
     else:
         st.warning("Tidak ada dataset yang bisa dihapus.")
 

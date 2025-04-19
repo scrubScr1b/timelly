@@ -40,7 +40,7 @@ brand_filter = st.sidebar.multiselect("Filter Customers", options=data['customer
 
 # --- Validasi Brand Filter ---
 if not brand_filter:
-    st.warning("Mohon diisi untuk Ccustomers-nya terlebih dahulu di sidebar.")
+    st.warning("Mohon diisi untuk Customers-nya terlebih dahulu di sidebar.")
     st.stop()
 
 # --- Parameter Model ---
