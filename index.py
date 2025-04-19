@@ -254,7 +254,7 @@ def register_form():
             save_user(username, password)
             st.success("Registration successful! Please log in.")
             log_activity(username, "register", "user registered")
-            time.sleep(1)
+            # time.sleep(1)
             st.session_state["auth_mode"] = "Login"  # switch otomatis ke login
             st.rerun()
 

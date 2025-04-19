@@ -73,3 +73,6 @@ timestamp,username,action,detail
 2025-04-19 11:28:17,admin,login,success
 2025-04-19 11:39:04,admin,logout,
 2025-04-19 11:39:08,user,login,success
+2025-04-19 11:44:35,user,logout,
+2025-04-19 11:44:43,test,register,user registered
+2025-04-19 11:44:58,test,login,success
