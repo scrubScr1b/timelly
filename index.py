@@ -194,6 +194,15 @@ from pages.sidebar import admin_pages, user_pages
 
 st.set_page_config(page_title="timelly", layout="wide",initial_sidebar_state="collapsed")
 
+# Tambahkan CSS untuk sembunyikan sidebar tombol:
+if not st.session_state.get("logged_in", False):
+    hide_sidebar = """
+        <style>
+        [data-testid="collapsedControl"] {display: none}
+        </style>
+    """
+    st.markdown(hide_sidebar, unsafe_allow_html=True)
+
 # ------------------------ SESSION INIT ------------------------ #
 
 if "logged_in" not in st.session_state:
