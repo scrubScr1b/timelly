@@ -242,25 +242,51 @@ def login_form():
             st.error("Incorrect username or password.")
             log_activity(username, "login", "failed")
 
+# def register_form():
+#     st.subheader("Register New Account")
+#     username = st.text_input("New Username", key="register_username")
+#     password = st.text_input("Password", type="password", key="register_password")
+#     confirm = st.text_input("Confirm Password", type="password", key="register_confirm")
+#     register_btn = st.button("Register", key="register_btn")
+
+#     if register_btn:
+#         if password != confirm:
+#             st.warning("Passwords do not match!")
+#         elif username in load_users()['username'].values:
+#             st.warning("Username already registered!")
+#         else:
+#             save_user(username, password)
+#             # st.success("Registration successful! Please log in.")
+#             log_activity(username, "register", "user registered")
+#             # time.sleep(1)
+#             st.session_state["just_registered"] = True #new
+#             st.session_state["auth_mode"] = "Login"  # switch otomatis ke login
+#             st.rerun()
+
+# Register V2 nambahin pass tidak boleh ada spasi
 def register_form():
-    st.subheader("Register New Account")
-    username = st.text_input("New Username", key="register_username")
+    st.subheader("Daftar Akun Baru")
+    username = st.text_input("Username Baru", key="register_username")
     password = st.text_input("Password", type="password", key="register_password")
-    confirm = st.text_input("Confirm Password", type="password", key="register_confirm")
-    register_btn = st.button("Register", key="register_btn")
+    confirm = st.text_input("Konfirmasi Password", type="password", key="register_confirm")
+    register_btn = st.button("Daftar", key="register_btn")
 
     if register_btn:
-        if password != confirm:
-            st.warning("Passwords do not match!")
+        if not username or not password or not confirm:
+            st.warning("Semua kolom harus diisi!")
+        elif " " in username:
+            st.warning("Username tidak boleh mengandung spasi!")
+        elif " " in password:
+            st.warning("Password tidak boleh mengandung spasi!")
+        elif password != confirm:
+            st.warning("Password dan konfirmasi tidak cocok!")
         elif username in load_users()['username'].values:
-            st.warning("Username already registered!")
+            st.warning("Username sudah terdaftar!")
         else:
             save_user(username, password)
-            # st.success("Registration successful! Please log in.")
             log_activity(username, "register", "user registered")
-            # time.sleep(1)
-            st.session_state["just_registered"] = True #new
-            st.session_state["auth_mode"] = "Login"  # switch otomatis ke login
+            st.session_state["just_registered"] = True
+            st.session_state["auth_mode"] = "Login"  # otomatis pindah ke login
             st.rerun()
 
 def logout():
