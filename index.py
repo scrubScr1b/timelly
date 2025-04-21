@@ -296,6 +296,28 @@ def change_password_modal():
 
 # ------------------------ AUTH FLOW ------------------------ #
 
+# V1 mentok di radio
+# if not st.session_state["logged_in"]:
+#     st.title("Welcome to Timelly!")
+
+#     # simpan mode login/register dalam session
+#     if "auth_mode" not in st.session_state:
+#         st.session_state["auth_mode"] = "Login"
+
+#     st.session_state["auth_mode"] = st.radio(
+#         "Select Action", ["Login", "Register"],
+#         horizontal=True,
+#         index=0 if st.session_state["auth_mode"] == "Login" else 1
+#     )
+
+#     if st.session_state["auth_mode"] == "Login":
+#         login_form()
+#     else:
+#         register_form()
+
+#     st.stop()
+
+# V2 
 if not st.session_state["logged_in"]:
     st.title("Welcome to Timelly!")
 
@@ -303,18 +325,26 @@ if not st.session_state["logged_in"]:
     if "auth_mode" not in st.session_state:
         st.session_state["auth_mode"] = "Login"
 
-    st.session_state["auth_mode"] = st.radio(
+    # tampilkan radio dan update state dengan benar
+    auth_mode = st.radio(
         "Select Action", ["Login", "Register"],
         horizontal=True,
-        index=0 if st.session_state["auth_mode"] == "Login" else 1
+        index=0 if st.session_state["auth_mode"] == "Login" else 1,
+        key="auth_radio"
     )
 
+    if auth_mode != st.session_state["auth_mode"]:
+        st.session_state["auth_mode"] = auth_mode
+        st.rerun()  # versi baru dari experimental_rerun()
+
+    # tampilkan form sesuai mode
     if st.session_state["auth_mode"] == "Login":
         login_form()
     else:
         register_form()
 
     st.stop()
+
 
 # ------------------------ POST LOGIN VIEW ------------------------ #
 

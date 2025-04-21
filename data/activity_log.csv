@@ -88,3 +88,18 @@ timestamp,username,action,detail
 2025-04-19 12:31:18,admin,login,success
 2025-04-19 12:40:28,admin,login,success
 2025-04-19 12:52:34,admin,login,success
+2025-04-19 13:09:33,admin,login,success
+2025-04-19 13:10:40,admin,login,success
+2025-04-21 21:09:12,test,register,user registered
+2025-04-21 21:11:35,te,register,user registered
+2025-04-21 21:11:49,kasep,register,user registered
+2025-04-21 21:17:35,asep,register,user registered
+2025-04-21 21:17:41,asep,login,success
+2025-04-21 21:17:45,asep,logout,
+2025-04-21 21:17:58,kasi,register,user registered
+2025-04-21 21:18:02,,login,failed
+2025-04-21 21:18:04, ,login,failed
+2025-04-21 21:18:08, ,login,failed
+2025-04-21 21:19:34,ww,register,user registered
+2025-04-21 21:19:38,ww,login,success
+2025-04-21 21:19:47,ww,logout,
