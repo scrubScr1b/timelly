@@ -33,7 +33,7 @@ user_pages = {
 admin_pages = {
     **user_pages,
     "Admin Panel": [
-        st.Page(admin_panel, title="Activity Logs"),
+        st.Page("pages/log.py", title="Activity Logs"),
         st.Page("pages/crud.py", title="Manage Users"),
         st.Page("pages/dataset.py", title="Upload Dataset"),
     ]
