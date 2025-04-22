@@ -240,9 +240,16 @@ monthly_df = monthly_df.sort_values(by="month_num").drop("month_num", axis=1)
 
 if chart_option == "Total Sales":
     chart = alt.Chart(monthly_df).mark_bar(color="#1f77b4").encode(
-        x="month:N", y="total_sales:Q", tooltip=["month", "total_sales"]
+    x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
+    y="total_sales:Q",
+    tooltip=["month", "total_sales"]
     )
 elif chart_option == "Quantity":
+    chart = alt.Chart(monthly_df).mark_bar(color="#1f77b4").encode(
+    x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
+    y="total_sales:Q",
+    tooltip=["month", "total_sales"]
+    )
     chart = alt.Chart(monthly_df).mark_bar(color="#ff7f0e").encode(
         x="month:N", y="qty:Q", tooltip=["month", "qty"]
     )
@@ -268,7 +275,7 @@ if "total_sales" in df_filtered.columns and "year" in df_filtered.columns:
 
     # Format angka menjadi dalam juta / miliar jika perlu
     line_chart = alt.Chart(sales_by_year).mark_line(point=True, color="#2ca02c").encode(
-        x=alt.X("year:O", title="Tahun"),
+        x=alt.X("year:O", title="Tahun",axis=alt.Axis(labelAngle=-0)),
         y=alt.Y("total_sales:Q", title="Total Sales", axis=alt.Axis(format=",.0f")),
         tooltip=[
             alt.Tooltip("year:O", title="Tahun"),
@@ -288,12 +295,33 @@ st.markdown("**Penjualan per Department**")
 if "dept" in df_filtered.columns:
     category_sales = df_filtered.groupby("dept")["total_sales"].sum().reset_index()
     chart = alt.Chart(category_sales).mark_bar().encode(
-        x="dept:N", y="total_sales:Q", color="dept:N", tooltip=["dept", "total_sales"]
+    x=alt.X("dept:N", axis=alt.Axis(labelAngle=0, title="Department")),
+    y=alt.Y("total_sales:Q", title="Total Sales"),
+    color="dept:N",
+    tooltip=["dept", "total_sales"]
     ).properties(
-        width=700,
-        height=400,
+    width=700,
+    height=400,
     )
 
     st.altair_chart(chart, use_container_width=True)
 else:
     st.warning("Kolom 'dept' tidak tersedia.")
+
+
+st.markdown("**Penjualan per Customers**")
+if "dept" in df_filtered.columns:
+    category_sales = df_filtered.groupby("customers")["total_sales"].sum().reset_index()
+    chart = alt.Chart(category_sales).mark_bar().encode(
+    x=alt.X("customers:N", axis=alt.Axis(labelAngle=0, title="Customers")),
+    y=alt.Y("total_sales:Q", title="Total Sales"),
+    color="customers:N",
+    tooltip=["customers", "total_sales"]
+    ).properties(
+    width=700,
+    height=400,
+    )
+
+    st.altair_chart(chart, use_container_width=True)
+else:
+    st.warning("Kolom 'customers' tidak tersedia.")

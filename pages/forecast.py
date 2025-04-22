@@ -236,9 +236,14 @@ if "data" not in st.session_state:
 
 data = st.session_state["data"]
 
-st.sidebar.header("Parameter Filter")
-start_date = st.sidebar.text_input("Start Date (YYYY-MM)", "2020-01")
-end_date = st.sidebar.text_input("End Date (YYYY-MM)", "2024-12")
+available_dates = data['date'].dt.to_period("M").drop_duplicates().astype(str)
+
+start_date = st.sidebar.date_input("Start Date", value=pd.to_datetime("2020-01-01"))
+end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-01"))
+
+start_date = pd.to_datetime(start_date).to_period("M").to_timestamp()
+end_date = pd.to_datetime(end_date).to_period("M").to_timestamp()
+
 brand_filter = st.sidebar.multiselect("Filter Customers", options=data['customers'].unique())
 
 if not brand_filter:
