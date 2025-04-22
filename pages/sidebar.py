@@ -26,7 +26,7 @@ user_pages = {
         st.Page("pages/cleaning.py", title="Data Cleaning"),
     ],
     "Forecasting": [
-        st.Page("pages/forecast.py", title="SARIMAX x BLSTM"),
+        st.Page("pages/forecast.py", title="Hybrid"),
     ]
 }
 
