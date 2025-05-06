@@ -156,3 +156,15 @@ timestamp,username,action,detail
 2025-04-26 07:33:32,Kasep,register,user registered
 2025-04-26 07:33:37,kasep,login,failed
 2025-04-26 07:33:41,Kasep,login,success
+2025-04-26 09:48:06,admin,login,success
+2025-04-26 09:57:52,admin,login,success
+2025-05-06 19:38:50,admin,login,success
+2025-05-06 19:40:49,admin,login,success
+2025-05-06 19:42:46,admin,logout,
+2025-05-06 19:42:53,user,login,failed
+2025-05-06 19:42:58,asep,login,failed
+2025-05-06 19:43:04,user,register,user registered
+2025-05-06 19:43:08,user,login,success
+2025-05-06 19:48:49,user,logout,
+2025-05-06 19:48:53,admin,login,success
+2025-05-06 20:50:29,admin,login,success

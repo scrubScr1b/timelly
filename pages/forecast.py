@@ -268,7 +268,8 @@ units = st.sidebar.slider("LSTM Units", 8, 256, 16)
 st.sidebar.header("Hybrid Parameters")
 hybrid_method = st.sidebar.selectbox(
     "Metode Hybrid",
-    ["Proximity", "Average", "Weighted", "Dynamic Weighted"]
+    # ["Proximity", "Average", "Weighted", "Dynamic Weighted"]
+    ["Dynamic Weighted"]
 )
 alpha = st.sidebar.slider("Alpha untuk Weighted", 0.0, 1.0, 0.5)
 

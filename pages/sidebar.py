@@ -14,19 +14,32 @@ def admin_panel():
     else:
         st.info("No activity logs yet.")
 
+
+# # V1
+# user_pages = {
+#     "Dataset": [
+#         st.Page("pages/preview.py", title="Preview Dataset"),
+#     ],
+#     "Market": [
+#         st.Page("pages/dashboard.py", title="Dashboard"),
+#         st.Page("pages/heatmap.py", title="Heat Map"),
+#     ],
+#     "Data ETL": [
+#         st.Page("pages/cleaning.py", title="Data Cleaning"),
+#     ],
+#     "Forecasting": [
+#         st.Page("pages/forecast.py", title="Hybrid"),
+#     ]
+# }
+
+# V2
 user_pages = {
-    "Dataset": [
+    "Menu": [
         st.Page("pages/preview.py", title="Preview Dataset"),
-    ],
-    "Market": [
         st.Page("pages/dashboard.py", title="Dashboard"),
-        st.Page("pages/heatmap.py", title="Heat Map"),
-    ],
-    "Data ETL": [
+        # st.Page("pages/heatmap.py", title="Heat Map"),
         st.Page("pages/cleaning.py", title="Data Cleaning"),
-    ],
-    "Forecasting": [
-        st.Page("pages/forecast.py", title="Hybrid"),
+        st.Page("pages/forecast.py", title="Forecasting"),
     ]
 }
 
