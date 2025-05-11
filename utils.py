@@ -1,6 +1,7 @@
 # utils.py
 import os
 import pandas as pd
+from scipy.stats import boxcox
 
 UPLOAD_DIR = "uploaded_data"
 CSV_PATH = os.path.join(UPLOAD_DIR, "dataset.csv")
@@ -18,3 +19,4 @@ def load_saved_dataset():
 
     df.columns = df.columns.str.strip().str.lower()
     return df, source
+

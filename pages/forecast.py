@@ -204,6 +204,8 @@
 
 # ---------------------- V2 ---------------------- #
 # Add Hybrid Yang Lain
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -271,7 +273,8 @@ hybrid_method = st.sidebar.selectbox(
     # ["Proximity", "Average", "Weighted", "Dynamic Weighted"]
     ["Dynamic Weighted"]
 )
-alpha = st.sidebar.slider("Alpha untuk Weighted", 0.0, 1.0, 0.5)
+# alpha = st.sidebar.slider("Alpha untuk Weighted", 0.0, 1.0, 0.5)
+alpha = 1.0
 
 data['date'] = pd.to_datetime(data['date'], format='%m-%Y')
 data = data[(data['date'] >= pd.to_datetime(start_date)) & (data['date'] <= pd.to_datetime(end_date))]
