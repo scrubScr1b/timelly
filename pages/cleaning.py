@@ -98,7 +98,7 @@ if "deleted_columns" not in st.session_state:
 df = st.session_state["data"]
 
 # Tampilkan dataset awal
-st.subheader("Dataset Sebelum Cleaning")
+st.subheader("Preview isi Dataset")
 st.dataframe(df)
 
 # ===============================
@@ -169,12 +169,6 @@ if delete_submit:
             st.error(f"Kolom '{col_to_remove}' tidak ditemukan!")
     else:
         st.warning("Silakan centang konfirmasi sebelum menghapus kolom.")
-
-# ===============================
-# Dataset Setelah Perubahan
-# ===============================
-st.subheader("Dataset Setelah Cleaning")
-st.dataframe(df)
 
 # ===============================
 # Kembalikan Kolom yang Dihapus
