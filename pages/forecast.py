@@ -246,11 +246,34 @@ end_date = st.sidebar.date_input("End Date", value=pd.to_datetime("2024-12-01"))
 start_date = pd.to_datetime(start_date).to_period("M").to_timestamp()
 end_date = pd.to_datetime(end_date).to_period("M").to_timestamp()
 
-brand_filter = st.sidebar.multiselect("Filter Customers", options=data['customers'].unique())
 
-if not brand_filter:
+# ------------- V1 ------------- #
+# brand_filter = st.sidebar.multiselect("Filter Customers", options=data['customers'].unique())
+
+# if not brand_filter:
+#     st.warning("Mohon diisi untuk Customers-nya terlebih dahulu di sidebar.")
+#     st.stop()
+
+# ------------- V2 ------------- #
+# add 'All' di awal
+customer_options = ['All'] + list(data['customers'].unique())
+
+brand_filter = st.sidebar.multiselect("Filter Customers", options=customer_options, default=['All'])
+
+# Jika 'All' dipilih, isi selected_customers dengan seluruh customer
+if 'All' in brand_filter:
+    selected_customers = list(data['customers'].unique())
+else:
+    selected_customers = brand_filter
+
+# Validasi jika tidak ada yang dipilih sama sekali
+if not selected_customers:
     st.warning("Mohon diisi untuk Customers-nya terlebih dahulu di sidebar.")
     st.stop()
+
+# Filter data
+data = data[data['customers'].isin(selected_customers)]
+
 
 st.sidebar.header("SARIMAX Parameters")
 p = st.sidebar.number_input("p (AR)", 0, 5, 0)
@@ -415,11 +438,31 @@ plot_forecast(sarimax_forecast, "SARIMAX Forecast")
 plot_forecast(blstm_forecast, "BLSTM Forecast")
 plot_forecast(hybrid_forecast, f"Hybrid Forecast ({hybrid_method})")
 
+
+# # --- Evaluasi V1 ---
+# def evaluate(true, pred, name):
+#     mse = mean_squared_error(true, pred)
+#     rmse = np.sqrt(mse)
+#     mape = mean_absolute_percentage_error(true, pred) * 100
+#     return f"**{name}**\n- MSE: {mse:.2f}\n- RMSE: {rmse:.2f}\n- MAPE: {mape:.2f}%"
+
+
+# # --- Evaluasi V2 ---
 def evaluate(true, pred, name):
     mse = mean_squared_error(true, pred)
     rmse = np.sqrt(mse)
     mape = mean_absolute_percentage_error(true, pred) * 100
-    return f"**{name}**\n- MSE: {mse:.2f}\n- RMSE: {rmse:.2f}\n- MAPE: {mape:.2f}%"
+
+    mse_trillion = mse / 1e12
+    rmse_million = rmse / 1e6
+
+    return (
+        f"**{name}**\n"
+        f"- MSE: {mse_trillion:.2f} \n"
+        f"- RMSE: {rmse_million:.2f} \n"
+        f"- MAPE: {mape:.2f}%"
+    )
+
 
 st.subheader("Evaluasi Model")
 st.markdown(evaluate(actual, sarimax_forecast, "SARIMAX"))
