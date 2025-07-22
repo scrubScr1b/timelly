@@ -234,34 +234,39 @@ if "customers" in df_filtered.columns:
 # ====================
 
 st.markdown("**Sales per Month**")
+
+# Grouping dan sorting data berdasarkan urutan bulan
 monthly_df = df_filtered.groupby("month")[["qty", "total_sales"]].sum().reset_index()
 monthly_df["month_num"] = monthly_df["month"].apply(lambda x: month_order.index(x) + 1)
 monthly_df = monthly_df.sort_values(by="month_num").drop("month_num", axis=1)
 
+# Pilihan chart berdasarkan opsi pengguna
 if chart_option == "Total Sales":
     chart = alt.Chart(monthly_df).mark_bar(color="#1f77b4").encode(
-    x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
-    y="total_sales:Q",
-    tooltip=["month", "total_sales"]
+        x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
+        y="total_sales:Q",
+        tooltip=["month", "total_sales"]
     )
 elif chart_option == "Quantity":
-    chart = alt.Chart(monthly_df).mark_bar(color="#1f77b4").encode(
-    x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
-    y="total_sales:Q",
-    tooltip=["month", "total_sales"]
-    )
     chart = alt.Chart(monthly_df).mark_bar(color="#ff7f0e").encode(
-        x="month:N", y="qty:Q", tooltip=["month", "qty"]
+        x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
+        y="qty:Q",
+        tooltip=["month", "qty"]
     )
 else:
     bar = alt.Chart(monthly_df).mark_bar(color="#1f77b4").encode(
-        x="month:N", y="total_sales:Q", tooltip=["month", "total_sales"]
+        x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
+        y="total_sales:Q",
+        tooltip=["month", "total_sales"]
     )
     line = alt.Chart(monthly_df).mark_line(color="#ff7f0e", point=True).encode(
-        x="month:N", y="qty:Q", tooltip=["month", "qty"]
+        x=alt.X("month:N", sort=month_order, axis=alt.Axis(labelAngle=-0)),
+        y="qty:Q",
+        tooltip=["month", "qty"]
     )
     chart = bar + line
 
+# Tampilkan chart
 st.altair_chart(chart.properties(height=300), use_container_width=True)
 
 # ====================
